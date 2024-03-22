@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "fancykimai"
 version = "0.1.0"
-description = ""
+description = "CLI Interface to use with Kimai2"
 authors = ["Gui Martins <gui.martins@fancywhale.ca>"]
 readme = "README.md"
+license = "GPL-3.0"
+homepage = "https://fancywhale.ca"
+repository = "https://github.com/gcarrarom/FancyKimai"
+keywords = ["kimai", "cli", "time-tracking"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
