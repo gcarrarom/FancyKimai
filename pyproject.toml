@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fancykimai"
+version = "0.1.0"
+description = ""
+authors = ["Gui Martins <gui.martins@fancywhale.ca>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+click-tester = "^1.0.0"
+requests = "^2.31.0"
+keyring = "^24.3.1"
+rich = "^13.7.1"
+iterfzf = "^1.2.0.46.1"
+
+[tool.poetry.scripts]
+kimai = "fancykimai.app:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
