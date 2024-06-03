@@ -22,9 +22,9 @@ Commands:
   config      Configuration commands
   customers   Customer commands
   login
-  projects
+  projects    Project commands
   teams
-  timesheets
+  timesheets  Timesheet commands
 ```
 
 ## License

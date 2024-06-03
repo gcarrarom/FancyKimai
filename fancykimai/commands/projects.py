@@ -8,11 +8,17 @@ from fancykimai.classes.click_groups import AliasedGroup
 
 @click.group(name='projects', cls=AliasedGroup)
 def projects_group():
+    '''
+    Project commands
+    '''
     pass
 
 @projects_group.command(name='list')
 @click.option('-o', '--output', type=click.Choice(['table', 'json']), default='table', help='Output format')
 def list_projects(output: str):
+    '''
+    List projects
+    '''
     r = kimai_request('api/projects')
     if output == 'table':
         columns = [
@@ -32,6 +38,9 @@ def list_projects(output: str):
 @projects_group.command(name='select')
 @click.argument('project_id', type=int, required=False)
 def select_project(project_id: int):
+    '''
+    Select a project
+    '''
     if project_id is None:
         # get all projects
         projects = kimai_request('api/projects')

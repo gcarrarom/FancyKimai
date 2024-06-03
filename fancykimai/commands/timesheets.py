@@ -12,6 +12,10 @@ from fancykimai.classes.click_groups import AliasedGroup
 
 @click.group(name="timesheets", cls=AliasedGroup)
 def timesheets_group():
+    """
+    Timesheet commands
+    """
+
     pass
 
 
@@ -40,6 +44,10 @@ def list_timesheets(
     show_costs: bool,
     show_total: bool,
 ):
+    """
+    List timesheets
+    """
+
     # format the begin and end dates
     if begin:
         begin = datetime.datetime.strptime(begin, "%Y-%m-%d").strftime(
@@ -207,6 +215,10 @@ def start_timesheet(project: int, activity: int, description: str):
 @timesheets_group.command(name="stop")
 @click.option("-i", "--id", type=int, required=False, help="Timesheet ID")
 def stop_timesheet(id: int):
+    """
+    Stop a timesheet entry
+    """
+
     if id is None:
         # Get the active timesheets to select
         timesheets = get_timesheets(data={"active": 1})
@@ -232,6 +244,10 @@ def stop_timesheet(id: int):
 @timesheets_group.command(name="delete")
 @click.argument("timesheet_id", type=int, required=False)
 def delete_timesheet(timesheet_id: int):
+    """
+    Delete a timesheet entry
+    """
+
     if timesheet_id is None:
         # get all timesheets
         timesheets = get_timesheets()
@@ -278,6 +294,10 @@ def delete_timesheet(timesheet_id: int):
 @click.option("-e", "--end", type=str, required=False, help="End date")
 @click.option("-h", "--hours", type=float, required=False, help="Hours to be set. When set, ignores the end date and if no begin time is set, sets it to 09:00")
 def set_timesheet(project: int, activity: int, description: str, begin: str, end: str, hours: float):
+    """
+    Set a timesheet entry
+    """
+    
     # Check if the hours are set on the dates
     begin_datetime = datetime.datetime.strptime(begin, "%Y-%m-%d")
     if end:
