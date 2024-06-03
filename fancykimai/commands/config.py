@@ -1,8 +1,9 @@
 import click
 import os
 from fancykimai.functions.config import get_config, set_config
+from fancykimai.classes.click_groups import AliasedGroup
 
-@click.group(name="config")
+@click.group(name="config", cls=AliasedGroup)
 def config_group():
     """
     Configuration commands

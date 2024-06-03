@@ -2,8 +2,9 @@ import click
 from fancykimai.functions.kimai import kimai_request
 from rich import table, console
 import json
+from fancykimai.classes.click_groups import AliasedGroup
 
-@click.group(name='customers')
+@click.group(name='customers', cls=AliasedGroup)
 def customers_group():
     """
     Customer commands

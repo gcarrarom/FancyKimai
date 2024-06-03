@@ -1,7 +1,8 @@
 import click
 from fancykimai.functions.kimai import kimai_request
+from fancykimai.classes.click_groups import AliasedGroup
 
-@click.group(name='teams')
+@click.group(name='teams', cls=AliasedGroup)
 def teams_group():
     pass
 

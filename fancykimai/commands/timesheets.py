@@ -1,14 +1,16 @@
 import click
 from fancykimai.functions.kimai import kimai_request
 from fancykimai.functions.config import get_config
+from fancykimai.functions.timesheets import get_timesheets
 import rich
 from rich import table, console
 import datetime
 import json
 from iterfzf import iterfzf
+from fancykimai.classes.click_groups import AliasedGroup
 
 
-@click.group(name="timesheets")
+@click.group(name="timesheets", cls=AliasedGroup)
 def timesheets_group():
     pass
 
@@ -45,6 +47,17 @@ def list_timesheets(
         )
     if end:
         end = datetime.datetime.strptime(end, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59")
+    if not begin and not end:
+        # begin = sunday this week
+        begin = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        begin -= datetime.timedelta(days=begin.weekday())
+        # end = saturday this week
+        end = begin + datetime.timedelta(days=6)
+        begin = begin.strftime("%Y-%m-%dT00:00:00")
+        end = end.strftime("%Y-%m-%dT23:59:59")
+
     r = kimai_request(
         "api/timesheets",
         data={
@@ -192,8 +205,22 @@ def start_timesheet(project: int, activity: int, description: str):
 
 
 @timesheets_group.command(name="stop")
-@click.option("-i", "--id", type=int, required=True, help="Timesheet ID")
+@click.option("-i", "--id", type=int, required=False, help="Timesheet ID")
 def stop_timesheet(id: int):
+    if id is None:
+        # Get the active timesheets to select
+        timesheets = get_timesheets(data={"active": 1})
+        if len(timesheets) > 0:
+            selected_timesheet = iterfzf(
+                [f"{timesheet.timesheet_id} - {timesheet.description}".replace("\r\n", "") for timesheet in timesheets],
+                multi=False,
+                prompt="Select a timesheet: ",
+            )
+            if selected_timesheet:
+                id = selected_timesheet.split()[0]
+            else:
+                click.echo("No timesheet selected.")
+                raise click.Abort("No timesheet selected.")
     end = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     try:
         r = kimai_request(f"api/timesheets/{id}/stop", method="get", data={"end": end})
@@ -207,10 +234,10 @@ def stop_timesheet(id: int):
 def delete_timesheet(timesheet_id: int):
     if timesheet_id is None:
         # get all timesheets
-        timesheets = kimai_request("api/timesheets")
+        timesheets = get_timesheets()
         if len(timesheets) > 0:
             selected_timesheet = iterfzf(
-                [f"{timesheet['id']} - {timesheet['description']}".replace("\r\n", "") for timesheet in timesheets],
+                [f"{timesheet.timesheet_id} - {timesheet.begin} {timesheet.description}".replace("\r\n", "") for timesheet in timesheets],
                 multi=False,
                 prompt="Select a timesheet: ",
             )
@@ -249,7 +276,8 @@ def delete_timesheet(timesheet_id: int):
 @click.option("-d", "--description", type=str, required=True, help="Description")
 @click.option("-b", "--begin", type=str, required=True, help="Begin date", default=datetime.datetime.now().strftime("%Y-%m-%d"))
 @click.option("-e", "--end", type=str, required=False, help="End date")
-def set_timesheet(project: int, activity: int, description: str, begin: str, end: str):
+@click.option("-h", "--hours", type=float, required=False, help="Hours to be set. When set, ignores the end date and if no begin time is set, sets it to 09:00")
+def set_timesheet(project: int, activity: int, description: str, begin: str, end: str, hours: float):
     # Check if the hours are set on the dates
     begin_datetime = datetime.datetime.strptime(begin, "%Y-%m-%d")
     if end:
@@ -260,9 +288,15 @@ def set_timesheet(project: int, activity: int, description: str, begin: str, end
     if begin_datetime > end_datetime:
         click.echo("Begin date cannot be after end date.")
         raise click.Abort("Begin date cannot be after end date.")
-    # ask for the time to be set
-    begin_time = click.prompt("Begin time", type=str, default="00:00")
-    end_time = click.prompt("End time", type=str, default="23:59")
+    if not hours:
+        # ask for the time to be set
+        begin_time = click.prompt("Begin time", type=str, default="00:00")
+        end_time = click.prompt("End time", type=str, default="23:59")
+    else:
+        begin_time = "09:00"
+        # add `hours` to 9 AM to get the end time
+        am9 = datetime.datetime.strptime(begin, "%Y-%m-%d").replace(hour=9, minute=0)
+        end_time = (am9 + datetime.timedelta(hours=hours)).strftime("%H:%M")
     begin = f"{begin}T{begin_time}:00"
     end = f"{end}T{end_time}:00"
     # Check if the begin and end dates are valid

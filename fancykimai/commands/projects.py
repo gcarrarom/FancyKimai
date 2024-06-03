@@ -4,8 +4,9 @@ from fancykimai.functions.config import set_config
 from rich import table, console
 import json
 from iterfzf import iterfzf
+from fancykimai.classes.click_groups import AliasedGroup
 
-@click.group(name='projects')
+@click.group(name='projects', cls=AliasedGroup)
 def projects_group():
     pass
 

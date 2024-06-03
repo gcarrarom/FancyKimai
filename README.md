@@ -12,6 +12,19 @@ pip install fancykimai
 
 ```bash
 kimai --help
+Usage: kimai [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  activities
+  config      Configuration commands
+  customers   Customer commands
+  login
+  projects
+  teams
+  timesheets
 ```
 
 ## License

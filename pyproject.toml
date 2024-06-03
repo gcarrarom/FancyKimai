@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fancykimai"
-version = "0.1.0"
+version = "0.1.4"
 description = "CLI Interface to use with Kimai2"
 authors = ["Gui Martins <gui.martins@fancywhale.ca>"]
 readme = "README.md"
@@ -16,6 +16,7 @@ requests = "^2.31.0"
 keyring = "^24.3.1"
 rich = "^13.7.1"
 iterfzf = "^1.2.0.46.1"
+pydantic = "^2.7.3"
 
 [tool.poetry.scripts]
 kimai = "fancykimai.app:cli"

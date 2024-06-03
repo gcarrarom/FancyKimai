@@ -2,24 +2,33 @@ import requests
 import keyring
 import urllib
 
-def kimai_request(path, method='GET', data=None, headers=None, base_url='default') -> dict:
+def get_context(context_name: str) -> dict:
+    keyring_user = keyring.get_password(f'kimai:{context_name}', 'user')
+    keyring_password = keyring.get_password(f'kimai:{context_name}', 'password')
+    keyring_url = keyring.get_password(f'kimai:{context_name}', 'url')
+    if keyring_user is None or keyring_password is None or keyring_url is None:
+        raise ValueError('Context not found')
+    return {'user': keyring_user, 'password': keyring_password, 'url': keyring_url}
+
+def kimai_request(path, method='GET', data=None, headers=None, base_url='default', context_name='default') -> dict:
     # check if keyring is set
-    keyring_user = keyring.get_password('kimai', 'user')
+    try:
+        context_values = get_context(context_name)
+    except ValueError:
+        context_values = {}
     # if keyring is not set and the call doesn't come from kimai_login, return an error
-    if keyring_user is None and path != 'api/ping':
+    if context_values.get('user') is None and path != 'api/ping':
         raise ValueError('Authentication not set. Use "kimai login" to set your authentication.')
-    keyring_password = keyring.get_password('kimai', 'password')
-    keyring_url = keyring.get_password('kimai', 'url')
     if base_url == 'default':
-        if keyring_url is None:
+        if context_values.get('url') is None:
             raise ValueError('Kimai URL not set. Use "kimai login" to set your authentication.')
-        base_url = keyring_url
+        base_url = context_values.get('url')
     url = urllib.parse.urljoin(base_url, path)
     if headers is None:
         headers = {'Content-Type': 'application/json'}
     if path != 'api/ping':
-        headers['X-AUTH-USER'] = keyring_user
-        headers['X-AUTH-TOKEN'] = keyring_password
+        headers['X-AUTH-USER'] = context_values.get('user')
+        headers['X-AUTH-TOKEN'] = context_values.get('password')
     if method.upper() == 'GET':
         if data is not None:
             r = requests.get(url, headers=headers, params=data)
@@ -36,5 +45,6 @@ def kimai_request(path, method='GET', data=None, headers=None, base_url='default
     else:
         raise ValueError('Method not supported')
     r.raise_for_status()
+
     return r.json()
 
