@@ -1,6 +1,7 @@
 import requests
 import keyring
 import urllib
+from fancykimai.functions.config import get_config
 
 def get_context(context_name: str) -> dict:
     keyring_user = keyring.get_password(f'kimai:{context_name}', 'user')
@@ -13,6 +14,8 @@ def get_context(context_name: str) -> dict:
 def kimai_request(path, method='GET', data=None, headers=None, base_url='default', context_name='default') -> dict:
     # check if keyring is set
     try:
+        if is_context_there := get_config('context'):
+            context_name = is_context_there
         context_values = get_context(context_name)
     except ValueError:
         context_values = {}
