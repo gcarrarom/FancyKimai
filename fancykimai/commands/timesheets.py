@@ -2,6 +2,8 @@ import click
 from fancykimai.functions.kimai import kimai_request
 from fancykimai.functions.config import get_config
 from fancykimai.functions.timesheets import get_timesheets
+from fancykimai.functions.activity import select_activity
+from fancykimai.functions.project import select_project
 import rich
 from rich import table, console
 import datetime
@@ -272,24 +274,25 @@ def delete_timesheet(timesheet_id: int):
         click.echo(f"Error: {e}")
 
 
+
 @timesheets_group.command(name="set")
 @click.option(
     "-p",
     "--project",
     type=int,
-    required=True,
     help="Project ID",
     default=get_config("project"),
+    callback=select_project,
 )
 @click.option(
     "-a",
     "--activity",
     type=int,
-    required=True,
     help="Activity ID",
     default=get_config("activity"),
+    callback=select_activity,
 )
-@click.option("-d", "--description", type=str, required=True, help="Description")
+@click.option("-d", "--description", type=str, required=False, help="Description", prompt="Please enter a description")
 @click.option("-b", "--begin", type=str, required=True, help="Begin date", default=datetime.datetime.now().strftime("%Y-%m-%d"))
 @click.option("-e", "--end", type=str, required=False, help="End date")
 @click.option("-h", "--hours", type=float, required=False, help="Hours to be set. When set, ignores the end date and if no begin time is set, sets it to 09:00")
