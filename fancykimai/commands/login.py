@@ -1,16 +1,7 @@
 import click
-import keyring
 from fancykimai.functions.kimai import kimai_request
 from fancykimai.functions.config import set_config
-
-
-def set_context(context_name: str, user: str, api_key: str, url: str, old: bool):
-    if old:
-        keyring.set_password(f"kimai:{context_name}", "user", user)
-        keyring.set_password(f"kimai:{context_name}", "password", api_key)
-    else:
-        keyring.set_password(f"kimai:{context_name}", "api_key", api_key)
-    keyring.set_password(f"kimai:{context_name}", "url", url)
+from fancykimai.functions.contexts import set_context_in_keyring
 
 
 @click.command(name="login")
@@ -56,6 +47,6 @@ def kimai_login(user, api_key, url, context_name, old):
         if r["message"] != "pong":
             raise ValueError("Authentication failed")
     # set the user and password in the keyring
-    set_context(context_name, user, api_key, url, old)
+    set_context_in_keyring(context_name, user, api_key, url, old)
     set_config("context", context_name)
     click.echo("Authentication successful")

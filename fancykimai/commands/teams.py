@@ -2,17 +2,28 @@ import click
 from fancykimai.functions.kimai import kimai_request
 from fancykimai.classes.click_groups import AliasedGroup
 
-@click.group(name='teams', cls=AliasedGroup)
+
+@click.group(name="teams", cls=AliasedGroup)
 def teams_group():
     pass
 
-@teams_group.command(name='list')
-@click.option('-o', '--output', type=click.Choice(['table', 'json']), default='table', help='Output format')
+
+@teams_group.command(name="list")
+@click.option(
+    "-o",
+    "--output",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
 def list_teams(output: str):
-    r = kimai_request('api/teams')
-    if output == 'table':
-        click.echo('ID\tName')
+    r = kimai_request("api/teams")
+    if r is None:
+        return
+    if output == "table":
+        click.echo("ID\tName")
         for team in r:
             click.echo(f'{team["id"]}\t{team["name"]}')
     else:
         click.echo(r)
+

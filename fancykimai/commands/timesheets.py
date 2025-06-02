@@ -78,6 +78,8 @@ def list_timesheets(
             "active": (1 if active else None),
         },
     )
+    if r is None:
+        return
     if output == "table":
         columns = [
             {"column": "ID", "response_key": "id", "function": str, "style": "cyan"},
@@ -209,7 +211,11 @@ def start_timesheet(project: int, activity: int, description: str):
                 "begin": begin,
             },
         )
-        click.echo(f"Started timesheet {r['id']} for project {r['project']} successfully.")
+        if r is None:
+            return
+        click.echo(
+            f"Started timesheet {r['id']} for project {r['project']} successfully."
+        )
     except Exception as e:
         click.echo(f"Error: {e}")
 
@@ -226,7 +232,12 @@ def stop_timesheet(id: int):
         timesheets = get_timesheets(data={"active": 1})
         if len(timesheets) > 0:
             selected_timesheet = iterfzf(
-                [f"{timesheet.timesheet_id} - {timesheet.description}".replace("\r\n", "") for timesheet in timesheets],
+                [
+                    f"{timesheet.timesheet_id} - {timesheet.description}".replace(
+                        "\r\n", ""
+                    )
+                    for timesheet in timesheets
+                ],
                 multi=False,
                 prompt="Select a timesheet: ",
             )
@@ -238,6 +249,8 @@ def stop_timesheet(id: int):
     end = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     try:
         r = kimai_request(f"api/timesheets/{id}/stop", method="get", data={"end": end})
+        if r is None:
+            return
         click.echo(f"Timesheet {id} stopped successfully.")
     except Exception as e:
         click.echo(f"Error: {e}")
@@ -255,7 +268,12 @@ def delete_timesheet(timesheet_id: int):
         timesheets = get_timesheets()
         if len(timesheets) > 0:
             selected_timesheet = iterfzf(
-                [f"{timesheet.timesheet_id} - {timesheet.begin} {timesheet.description}".replace("\r\n", "") for timesheet in timesheets],
+                [
+                    f"{timesheet.timesheet_id} - {timesheet.begin} {timesheet.description}".replace(
+                        "\r\n", ""
+                    )
+                    for timesheet in timesheets
+                ],
                 multi=False,
                 prompt="Select a timesheet: ",
             )
@@ -269,10 +287,11 @@ def delete_timesheet(timesheet_id: int):
             raise click.Abort("No timesheets found.")
     try:
         r = kimai_request(f"api/timesheets/{timesheet_id}", method="delete")
+        if r is None:
+            return
         click.echo(f"Timesheet {timesheet_id} deleted successfully.")
     except Exception as e:
         click.echo(f"Error: {e}")
-
 
 
 @timesheets_group.command(name="set")
@@ -292,15 +311,37 @@ def delete_timesheet(timesheet_id: int):
     default=get_config("activity"),
     callback=select_activity,
 )
-@click.option("-d", "--description", type=str, required=False, help="Description", prompt="Please enter a description")
-@click.option("-b", "--begin", type=str, required=True, help="Begin date", default=datetime.datetime.now().strftime("%Y-%m-%d"))
+@click.option(
+    "-d",
+    "--description",
+    type=str,
+    required=False,
+    help="Description",
+    prompt="Please enter a description",
+)
+@click.option(
+    "-b",
+    "--begin",
+    type=str,
+    required=True,
+    help="Begin date",
+    default=datetime.datetime.now().strftime("%Y-%m-%d"),
+)
 @click.option("-e", "--end", type=str, required=False, help="End date")
-@click.option("-h", "--hours", type=float, required=False, help="Hours to be set. When set, ignores the end date and if no begin time is set, sets it to 09:00")
-def set_timesheet(project: int, activity: int, description: str, begin: str, end: str, hours: float):
+@click.option(
+    "-h",
+    "--hours",
+    type=float,
+    required=False,
+    help="Hours to be set. When set, ignores the end date and if no begin time is set, sets it to 09:00",
+)
+def set_timesheet(
+    project: int, activity: int, description: str, begin: str, end: str, hours: float
+):
     """
     Set a timesheet entry
     """
-    
+
     # Check if the hours are set on the dates
     begin_datetime = datetime.datetime.strptime(begin, "%Y-%m-%d")
     if end:
@@ -339,8 +380,11 @@ def set_timesheet(project: int, activity: int, description: str, begin: str, end
             "end": datetime.datetime.strftime(end_datetime, "%Y-%m-%dT%H:%M:%S"),
         },
     )
+    if r is None:
+        return
     click.echo(r)
 
 
 if __name__ == "__main__":
     delete_timesheet()
+

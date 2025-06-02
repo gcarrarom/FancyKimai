@@ -1,10 +1,10 @@
 import requests
 import keyring
 import urllib
-from fancykimai.functions.config import get_config
+from fancykimai.functions.config import get_config, get_current_context
 
 
-def get_context(context_name: str) -> dict:
+def get_context(context_name: str) -> dict[str, str | None]:
     keyring_url = keyring.get_password(f"kimai:{context_name}", "url")
     if keyring_url is None:
         raise ValueError("Context not found: URL is required")
@@ -18,7 +18,9 @@ def get_context(context_name: str) -> dict:
     has_user_pass_auth = keyring_user is not None and keyring_password is not None
 
     if not (has_api_key_auth or has_user_pass_auth):
-        raise ValueError("Context not found: Either API key or username/password is required")
+        raise ValueError(
+            "Context not found: Either API key or username/password is required"
+        )
 
     return {
         "url": keyring_url,
@@ -35,28 +37,32 @@ def kimai_request(
     headers=None,
     base_url="default",
     context_name="default",
-) -> dict:
+) -> dict | None:
     # check if keyring is set
     try:
-        if is_context_there := get_config("context"):
-            context_name = is_context_there
+        selected_context = get_current_context()
+        if selected_context is not None:
+            context_name = selected_context
         context_values = get_context(context_name)
     except ValueError:
         context_values = {}
     if path != "api/ping":
-        has_user_auth = context_values.get("user") is not None and context_values.get("password") is not None
+        has_user_auth = (
+            context_values.get("user") is not None
+            and context_values.get("password") is not None
+        )
         has_api_key_auth = context_values.get("api_key") is not None
 
         if not (has_user_auth or has_api_key_auth):
-            raise ValueError(
+            print(
                 'Authentication not set. Use "kimai login" to set your authentication. '
-                'Either username/password or API key is required.'
+                "Either username/password or API key is required."
             )
+            return None
     if base_url == "default":
         if context_values.get("url") is None:
-            raise ValueError(
-                'Kimai URL not set. Use "kimai login" to set your authentication.'
-            )
+            print('Kimai URL not set. Use "kimai login" to set your authentication.')
+            return None
         base_url = context_values.get("url")
     url = urllib.parse.urljoin(base_url, path)
     if headers is None:
@@ -82,7 +88,8 @@ def kimai_request(
         if r.status_code == 204:
             return {"status": "success", "message": "Deleted"}
     else:
-        raise ValueError("Method not supported")
+        print("Method not supported")
+        return None
     r.raise_for_status()
 
     return r.json()

@@ -5,6 +5,7 @@ from .customers import customers_group
 from .teams import teams_group
 from .timesheets import timesheets_group
 from .config import config_group
+from .contexts import contexts_group
 
 commands = [
     kimai_login,
@@ -14,4 +15,6 @@ commands = [
     teams_group,
     timesheets_group,
     config_group,
+    contexts_group,
 ]
+
