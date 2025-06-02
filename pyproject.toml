@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fancykimai"
-version = "0.2.1"
+version = "0.2.2"
 description = "CLI Interface to use with Kimai2"
 authors = ["Gui Martins <gui.martins@fancywhale.ca>"]
 readme = "README.md"

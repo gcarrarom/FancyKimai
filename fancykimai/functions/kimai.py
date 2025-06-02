@@ -5,21 +5,25 @@ from fancykimai.functions.config import get_config
 
 
 def get_context(context_name: str) -> dict:
+    keyring_url = keyring.get_password(f"kimai:{context_name}", "url")
+    if keyring_url is None:
+        raise ValueError("Context not found: URL is required")
+
+    keyring_api_key = keyring.get_password(f"kimai:{context_name}", "api_key")
+
     keyring_user = keyring.get_password(f"kimai:{context_name}", "user")
     keyring_password = keyring.get_password(f"kimai:{context_name}", "password")
-    keyring_url = keyring.get_password(f"kimai:{context_name}", "url")
-    keyring_api_key = keyring.get_password(f"kimai:{context_name}", "api_key")
-    if (
-        keyring_user is None
-        or keyring_password is None
-        or keyring_url is None
-        or keyring_api_key is None
-    ):
-        raise ValueError("Context not found")
+
+    has_api_key_auth = keyring_api_key is not None
+    has_user_pass_auth = keyring_user is not None and keyring_password is not None
+
+    if not (has_api_key_auth or has_user_pass_auth):
+        raise ValueError("Context not found: Either API key or username/password is required")
+
     return {
+        "url": keyring_url,
         "user": keyring_user,
         "password": keyring_password,
-        "url": keyring_url,
         "api_key": keyring_api_key,
     }
 
@@ -39,13 +43,15 @@ def kimai_request(
         context_values = get_context(context_name)
     except ValueError:
         context_values = {}
-    # if keyring is not set and the call doesn't come from kimai_login, return an error
-    if (
-        context_values.get("user") is None or context_values.get("api_key") is None
-    ) and path != "api/ping":
-        raise ValueError(
-            'Authentication not set. Use "kimai login" to set your authentication.'
-        )
+    if path != "api/ping":
+        has_user_auth = context_values.get("user") is not None and context_values.get("password") is not None
+        has_api_key_auth = context_values.get("api_key") is not None
+
+        if not (has_user_auth or has_api_key_auth):
+            raise ValueError(
+                'Authentication not set. Use "kimai login" to set your authentication. '
+                'Either username/password or API key is required.'
+            )
     if base_url == "default":
         if context_values.get("url") is None:
             raise ValueError(
@@ -58,7 +64,7 @@ def kimai_request(
     if path != "api/ping":
         api_key = context_values.get("api_key", None)
         if api_key is not None:
-            headers["Authorization"] = f"Bearer {context_values.get("password")}"
+            headers["Authorization"] = f"Bearer {api_key}"
         else:
             headers["X-AUTH-USER"] = context_values.get("user")
             headers["X-AUTH-TOKEN"] = context_values.get("password")
