@@ -40,7 +40,9 @@ def kimai_request(
     except ValueError:
         context_values = {}
     # if keyring is not set and the call doesn't come from kimai_login, return an error
-    if context_values.get("user") is None and path != "api/ping":
+    if (
+        context_values.get("user") is None or context_values.get("api_key") is None
+    ) and path != "api/ping":
         raise ValueError(
             'Authentication not set. Use "kimai login" to set your authentication.'
         )
